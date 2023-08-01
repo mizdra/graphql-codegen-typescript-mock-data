@@ -424,7 +424,7 @@ export const ${toMockName(
             typeName,
             casedName,
             prefix,
-        )} = <const T extends DeepPartial<${casedNameWithPrefix}> = {}>(overrides?: Partial<${casedNameWithPrefix}>, _relationshipsToOmit: Set<string> = new Set()): Merge<TerminateCircularRelationship<DeepExcludeMaybe<${typenameReturnType}${casedNameWithPrefix}>>, Required<T>> => {
+        )} = <const T extends DeepPartial<${casedNameWithPrefix}> = {}>(overrides?: T, _relationshipsToOmit: Set<string> = new Set()): Merge<TerminateCircularRelationship<DeepExcludeMaybe<${typenameReturnType}${casedNameWithPrefix}>>, Required<T>> => {
     const relationshipsToOmit: Set<string> = new Set(_relationshipsToOmit);
     relationshipsToOmit.add('${casedName}');
     return {${typename}
