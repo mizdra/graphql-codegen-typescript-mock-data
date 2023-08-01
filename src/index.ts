@@ -424,12 +424,12 @@ export const ${toMockName(
             typeName,
             casedName,
             prefix,
-        )} = (overrides?: Partial<${casedNameWithPrefix}>, _relationshipsToOmit: Set<string> = new Set()): ${typenameReturnType}${casedNameWithPrefix} => {
+        )} = <const T extends DeepPartial<${casedNameWithPrefix}> = {}>(overrides?: Partial<${casedNameWithPrefix}>, _relationshipsToOmit: Set<string> = new Set()): Merge<TerminateCircularRelationship<DeepExcludeMaybe<${typenameReturnType}${casedNameWithPrefix}>>, Required<T>> => {
     const relationshipsToOmit: Set<string> = new Set(_relationshipsToOmit);
     relationshipsToOmit.add('${casedName}');
     return {${typename}
 ${fields}
-    };
+    } as any;
 };`;
     } else {
         return `
@@ -785,6 +785,33 @@ export const plugin: PluginFunction<TypescriptMocksPluginConfig> = (schema, docu
     if (dynamicValues) mockFile += `${functionTokens.import}\n`;
     mockFile += typesFileImport;
     if (dynamicValues) mockFile += `\n${functionTokens.seed}\n`;
+    mockFile += '\n';
+    mockFile += `
+type Merge<F, S> = {
+    [K in keyof F | keyof S]: K extends keyof S ? S[K] : K extends keyof F ? F[K] : never;
+};
+
+type DeepPartial<T> = T extends object
+? {
+    [P in keyof T]?: DeepPartial<T[P]> | undefined;
+    }
+: T;
+
+type DeepExcludeMaybe<T> = T extends object
+? {
+    [P in keyof T]-?: DeepExcludeMaybe<Exclude<T[P], null | undefined>>;
+    }
+: T;
+
+type TerminateCircularRelationship<T extends Record<string, unknown>, Visited = never> = {
+  [K in keyof T]: T[K] extends Visited
+    ? {}
+    : T[K] extends Record<string, unknown>
+    ? TerminateCircularRelationship<T[K], Visited | T>
+    : T[K];
+};
+        `.trim();
+    mockFile += '\n';
     mockFile += mockFns;
     if (dynamicValues) mockFile += `\n\n${functionTokens.seedFunction}`;
     mockFile += '\n';
