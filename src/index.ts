@@ -411,6 +411,7 @@ const getMockString = (
     prefix,
     typesPrefix = '',
     transformUnderscore: boolean,
+    isInterfaceFieldsType = '',
 ) => {
     const typeNameConverter = createNameConverter(typeNamesConvention, transformUnderscore);
     const casedName = typeNameConverter(typeName);
@@ -424,7 +425,7 @@ export const ${toMockName(
             typeName,
             casedName,
             prefix,
-        )} = <const T extends DeepPartial<${casedNameWithPrefix}> = {}>(overrides?: T, _relationshipsToOmit: Set<string> = new Set()): Merge<TerminateCircularRelationship<DeepExcludeMaybe<${typenameReturnType}${casedNameWithPrefix}>>, Required<T>> => {
+        )} = <const T extends DeepPartial<${casedNameWithPrefix}> = {}>(overrides?: T, _relationshipsToOmit: Set<string> = new Set()): Merge<TerminateCircularRelationship<DeepExcludeMaybe<${typenameReturnType}${isInterfaceFieldsType}${casedNameWithPrefix}>>, Required<T>> => {
     const relationshipsToOmit: Set<string> = new Set(_relationshipsToOmit);
     relationshipsToOmit.add('${casedName}');
     return {${typename}
@@ -719,16 +720,23 @@ export const plugin: PluginFunction<TypescriptMocksPluginConfig> = (schema, docu
                 typeName,
                 mockFn: () => {
                     const mockFields = fields ? fields.map(({ mockFn }: any) => mockFn(typeName)).join('\n') : '';
+                    const isInterfaceFields = node.interfaces
+                        ? `\n${node.interfaces.map((item) => `__is${item.name.value}: '${typeName}'`).join('\n')}`
+                        : '';
+                    const isInterfaceFieldsType = node.interfaces
+                        ? `{ ${node.interfaces.map((item) => `__is${item.name.value}: '${typeName}'`).join(', ')} } & `
+                        : '';
 
                     return getMockString(
                         typeName,
-                        mockFields,
+                        mockFields + isInterfaceFields,
                         typeNamesConvention,
                         !!config.terminateCircularRelationships,
                         !!config.addTypename,
                         config.prefix,
                         config.typesPrefix,
                         transformUnderscore,
+                        isInterfaceFieldsType,
                     );
                 },
             };
